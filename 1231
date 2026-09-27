@@ -1,0 +1,200 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+
+local angle = 1
+local radius = 10
+local angleSpeed = 2
+local blackHoleActive = false
+
+local function setupPlayer()
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+    local Folder = Instance.new("Folder", Workspace)
+    local Part = Instance.new("Part", Folder)
+    local Attachment1 = Instance.new("Attachment", Part)
+
+    Part.Anchored = true
+    Part.CanCollide = false
+    Part.Transparency = 1
+
+    return humanoidRootPart, Attachment1
+end
+
+local humanoidRootPart, Attachment1 = setupPlayer()
+
+if not getgenv().Network then
+    getgenv().Network = {
+        BaseParts = {},
+        Velocity = Vector3.new(14.46262424, 14.46262424, 14.46262424)
+    }
+
+    Network.RetainPart = function(part)
+        if typeof(part) == "Instance"
+            and part:IsA("BasePart")
+            and part:IsDescendantOf(Workspace) then
+
+            table.insert(Network.BaseParts, part)
+            part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+            part.CanCollide = false
+        end
+    end
+
+    local function EnablePartControl()
+        LocalPlayer.ReplicationFocus = Workspace
+
+        RunService.Heartbeat:Connect(function()
+            sethiddenproperty(LocalPlayer, "SimulationRadius", math.huge)
+
+            for _, part in pairs(Network.BaseParts) do
+                if part:IsDescendantOf(Workspace) then
+                    part.Velocity = Network.Velocity
+                end
+            end
+        end)
+    end
+
+    EnablePartControl()
+end
+
+local function ForcePart(v)
+    if v:IsA("Part")
+        and not v.Anchored
+        and not v.Parent:FindFirstChild("Humanoid")
+        and not v.Parent:FindFirstChild("Head")
+        and v.Name ~= "Handle" then
+
+        for _, x in next, v:GetChildren() do
+            if x:IsA("BodyAngularVelocity")
+                or x:IsA("BodyForce")
+                or x:IsA("BodyGyro")
+                or x:IsA("BodyPosition")
+                or x:IsA("BodyThrust")
+                or x:IsA("BodyVelocity")
+                or x:IsA("RocketPropulsion") then
+
+                x:Destroy()
+            end
+        end
+
+        if v:FindFirstChild("Attachment") then
+            v:FindFirstChild("Attachment"):Destroy()
+        end
+
+        if v:FindFirstChild("AlignPosition") then
+            v:FindFirstChild("AlignPosition"):Destroy()
+        end
+
+        if v:FindFirstChild("Torque") then
+            v:FindFirstChild("Torque"):Destroy()
+        end
+
+        v.CanCollide = false
+
+        local Torque = Instance.new("Torque", v)
+        Torque.Torque = Vector3.new(1000000, 1000000, 1000000)
+
+        local AlignPosition = Instance.new("AlignPosition", v)
+        local Attachment2 = Instance.new("Attachment", v)
+
+        Torque.Attachment0 = Attachment2
+
+        AlignPosition.MaxForce = math.huge
+        AlignPosition.MaxVelocity = math.huge
+        AlignPosition.Responsiveness = 500
+        AlignPosition.Attachment0 = Attachment2
+        AlignPosition.Attachment1 = Attachment1
+    end
+end
+
+local descendantConnection
+
+local function toggleBlackHole()
+    blackHoleActive = not blackHoleActive
+
+    if blackHoleActive then
+
+        for _, v in next, Workspace:GetDescendants() do
+            ForcePart(v)
+        end
+
+        if descendantConnection then
+            descendantConnection:Disconnect()
+        end
+
+        descendantConnection = Workspace.DescendantAdded:Connect(function(v)
+            if blackHoleActive then
+                ForcePart(v)
+            end
+        end)
+
+        task.spawn(function()
+            while blackHoleActive do
+                RunService.RenderStepped:Wait()
+
+                -- Spin speed
+                angle = angle + math.rad(angleSpeed)
+
+                local offsetX = math.cos(angle) * radius
+                local offsetZ = math.sin(angle) * radius
+
+                Attachment1.WorldCFrame =
+                    humanoidRootPart.CFrame *
+                    CFrame.new(offsetX, 0, offsetZ)
+            end
+        end)
+
+    else
+        Attachment1.WorldCFrame = CFrame.new(0, -1000, 0)
+
+        if descendantConnection then
+            descendantConnection:Disconnect()
+            descendantConnection = nil
+        end
+    end
+end
+
+LocalPlayer.CharacterAdded:Connect(function()
+    humanoidRootPart, Attachment1 = setupPlayer()
+
+    if blackHoleActive then
+        blackHoleActive = false
+        toggleBlackHole()
+    end
+end)
+
+-- UI
+local library = loadstring(
+    game:HttpGet(
+        "https://raw.githubusercontent.com/DeveloperScripter/i-don-t-know/refs/heads/main/98"
+    )
+)()
+
+local window = library:Window("BlackHole Ring")
+
+-- Radius
+window:Slider("Radius Blackhole", 1, 100, 10, function(Value)
+    radius = Value
+end)
+
+-- Spin Speed
+window:Slider("Spin Speed", 1, 50, 2, function(Value)
+    angleSpeed = Value
+end)
+
+-- Toggle
+window:Toggle("Blackhole", true, function(Value)
+    if Value then
+        if not blackHoleActive then
+            toggleBlackHole()
+        end
+    else
+        if blackHoleActive then
+            toggleBlackHole()
+        end
+    end
+end)
+
+toggleBlackHole()
