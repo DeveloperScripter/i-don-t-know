@@ -7,6 +7,9 @@ local angle = 1
 local radius = 10
 local angleSpeed = 2
 local blackHoleActive = false
+local mode = "Ring"
+
+local Mouse = LocalPlayer:GetMouse()
 
 local function setupPlayer()
     local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
@@ -134,15 +137,24 @@ local function toggleBlackHole()
             while blackHoleActive do
                 RunService.RenderStepped:Wait()
 
-                -- Spin speed
-                angle = angle + math.rad(angleSpeed)
+                if mode == "Ring" then
+                    -- Ring mode
+                    angle = angle + math.rad(angleSpeed)
 
-                local offsetX = math.cos(angle) * radius
-                local offsetZ = math.sin(angle) * radius
+                    local offsetX = math.cos(angle) * radius
+                    local offsetZ = math.sin(angle) * radius
 
-                Attachment1.WorldCFrame =
-                    humanoidRootPart.CFrame *
-                    CFrame.new(offsetX, 0, offsetZ)
+                    Attachment1.WorldCFrame =
+                        humanoidRootPart.CFrame *
+                        CFrame.new(offsetX, 0, offsetZ)
+
+                elseif mode == "Cursor" then
+                    -- Cursor mode
+                    local mousePosition = Mouse.Hit.Position
+
+                    Attachment1.WorldCFrame =
+                        CFrame.new(mousePosition)
+                end
             end
         end)
 
@@ -174,14 +186,23 @@ local library = loadstring(
 
 local window = library:Window("BlackHole Ring")
 
--- Radius
-window:Slider("Radius Blackhole", 1, 100, 10, function(Value)
+-- Radius: 1 - 200
+window:Slider("Radius Blackhole", 1, 200, 10, function(Value)
     radius = Value
 end)
 
 -- Spin Speed
 window:Slider("Spin Speed", 1, 50, 2, function(Value)
     angleSpeed = Value
+end)
+
+-- Mode button
+window:Button("Mode: Ring", function()
+    if mode == "Ring" then
+        mode = "Cursor"
+    else
+        mode = "Ring"
+    end
 end)
 
 -- Toggle
