@@ -198,10 +198,3 @@ window:Toggle("Blackhole", true, function(Value)
 end)
 
 toggleBlackHole()
-
-
-Extend radius to 200
-and add button mode
-Cursor mode and Ring mode
-
-
