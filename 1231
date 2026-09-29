@@ -9,7 +9,7 @@ local radius = 10
 local angleSpeed = 2
 local blackHoleActive = false
 local mode = "Ring" -- "Ring" or "Cursor"
-local MIN_CURSOR_DIST = 20 -- prevents parts from flying into your screen
+local MIN_CURSOR_DIST = 50 -- prevents parts from flying into your screen
 
 local function setupPlayer()
     local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
