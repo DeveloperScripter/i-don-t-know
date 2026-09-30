@@ -132,8 +132,8 @@ local function updateAttachmentPosition()
         local camPos = Camera.CFrame.Position
         local direction = (targetPos - camPos)
         local distance = direction.Magnitude
-        if distance < 40 then
-            targetPos = camPos + direction.Unit * 40
+        if distance < 100 then
+            targetPos = camPos + direction.Unit * 100
         end
 
         Attachment1.WorldCFrame = CFrame.new(targetPos)
