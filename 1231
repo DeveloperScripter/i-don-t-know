@@ -205,7 +205,7 @@ window:Button("Cursor Mode", function()
 end)
 
 -- Toggle
-window:Toggle("Blackhole", true, function(Value)
+window:Toggle("Blackhole", false, function(Value)
     if Value then
         if not blackHoleActive then
             toggleBlackHole()
@@ -216,5 +216,3 @@ window:Toggle("Blackhole", true, function(Value)
         end
     end
 end)
-
-toggleBlackHole()
